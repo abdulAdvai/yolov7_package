@@ -753,7 +753,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
 
         objectness_list.append(objectness.clone())
         class_conf_list.append(cls_conf.clone())
-        indices_list.append(xi.copy())
+        indices_list.append(xi)
 
         # Box (center x, center y, width, height) to (x1, y1, x2, y2)
         box = xywh2xyxy(x[:, :4])

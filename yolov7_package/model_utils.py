@@ -202,7 +202,7 @@ class Yolov7Detector:
             pred = self.model(y, )[0] # augment=self.augment
             inference_time = time.time() - starttime
 
-            pred, objectness_list, class_conf_list, indices_list = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=None,
+            pred, objectness_list, class_conf_list, indices_list, original_prediction = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=None,
                                        agnostic=self.agnostic_nms)
             #print(pred)
             for i, det in enumerate(pred):  # detections per image
@@ -232,7 +232,7 @@ class Yolov7Detector:
                 confs.append(local_confs)
 
 
-            return classes, boxes, confs, inference_time, objectness_list, class_conf_list, indices_list
+            return classes, boxes, confs, inference_time, objectness_list, class_conf_list, indices_list, original_prediction
 
     def train(self, save_dir: str, data: str, cfg: str, hyp: str, transfer=False, workers=8, epochs=10, batch_size=32):
         if self.traced:

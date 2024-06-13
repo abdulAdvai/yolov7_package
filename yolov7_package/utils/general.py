@@ -704,6 +704,8 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
          list of detections, on (n,6) tensor per image [xyxy, conf, cls]
     """
 
+    original_prediction = prediction.clone()
+
     nc = prediction.shape[2] - 5  # number of classes
     xc = prediction[..., 4] > conf_thres  # candidates
 
@@ -800,7 +802,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
             print(f'WARNING: NMS time limit {time_limit}s exceeded')
             break  # time limit exceeded
 
-    return output, objectness_list, class_conf_list, indices_list
+    return output, objectness_list, class_conf_list, indices_list, original_prediction
 
 
 def non_max_suppression_kpt(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,

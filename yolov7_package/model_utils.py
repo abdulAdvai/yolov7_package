@@ -21,6 +21,8 @@ from .utils.general import non_max_suppression, non_max_suppression_kpt, check_d
 from .utils.torch_utils import TracedModel, torch_distributed_zero_first, ModelEMA
 from .load_utils import load_script_model
 
+import time
+
 
 def conf2color(conf):
     if (conf <= 0.6):
@@ -195,9 +197,12 @@ class Yolov7Detector:
                 y.append(img_inf)
 
             y = torch.stack(y)
-            pred = self.model(y, )[0] # augment=self.augment
 
-            pred = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=None,
+            starttime = time.time()
+            pred = self.model(y, )[0] # augment=self.augment
+            inference_time = time.time() - starttime
+
+            pred, objectness_list, class_conf_list, indices_list = non_max_suppression(pred, self.conf_thres, self.iou_thres, classes=None,
                                        agnostic=self.agnostic_nms)
             #print(pred)
             for i, det in enumerate(pred):  # detections per image
@@ -227,7 +232,7 @@ class Yolov7Detector:
                 confs.append(local_confs)
 
 
-            return classes, boxes, confs
+            return classes, boxes, confs, inference_time, objectness_list, class_conf_list, indices_list
 
     def train(self, save_dir: str, data: str, cfg: str, hyp: str, transfer=False, workers=8, epochs=10, batch_size=32):
         if self.traced:

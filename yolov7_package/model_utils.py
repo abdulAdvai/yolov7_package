@@ -182,6 +182,8 @@ class Yolov7Detector:
             classes = []
             boxes = []
             confs = []
+            objs = []
+            cls_confs = []
             img_sizes = []
             y = []
             for i, img in enumerate(x):
@@ -209,6 +211,8 @@ class Yolov7Detector:
                 local_classes = []
                 local_boxes = []
                 local_confs = []
+                local_obj = []
+                local_cls_conf = []
                 old_shape = img_sizes[i]
                 #gn = torch.tensor(old_shape)[[1, 0, 1, 0]]  # normalization gain whwh
                 if len(det):
@@ -217,8 +221,14 @@ class Yolov7Detector:
                     #print(det[:, :4])
                     #det[:, :4] = scale_coords(self.img_size, det[:, :4], old_shape[:2]).round()
                     #print(det[:, :4])
-
-                    for *xyxy, conf, cls in reversed(det):
+                    # for *xyxy, conf, cls, obj, cls_conf in reversed(det):
+                    for element in reversed(det):
+                        # Explicit slicing to ensure correct elements assignment
+                        xyxy = element[:4]
+                        conf = element[4]
+                        cls = element[5]
+                        obj = element[6]
+                        cls_conf = element[7:]
                         coords = torch.tensor(xyxy).tolist()
                         xyxy_scaled = [coords[0] * dy, coords[1] * dx, coords[2] * dy, coords[3] * dx]
                         #print(, conf, cls)
@@ -226,13 +236,44 @@ class Yolov7Detector:
                         local_classes.append(int(cls.cpu().item()))
                         local_boxes.append(xyxy_scaled)
                         local_confs.append(float(conf.cpu().item()))
+                        local_obj.append(float(obj.cpu().item()))
+                        local_cls_conf.append(cls_conf.cpu().tolist())
 
                 classes.append(local_classes)
                 boxes.append(local_boxes)
                 confs.append(local_confs)
+                objs.append(local_obj)
+                cls_confs.append(local_cls_conf)
+
+            return classes, boxes, confs, objs, cls_confs, inference_time, objectness_list, class_conf_list, indices_list, original_prediction
+            # for i, det in enumerate(pred):  # detections per image
+            #     local_classes = []
+            #     local_boxes = []
+            #     local_confs = []
+            #     old_shape = img_sizes[i]
+            #     #gn = torch.tensor(old_shape)[[1, 0, 1, 0]]  # normalization gain whwh
+            #     if len(det):
+            #         dx = old_shape[0] / self.img_size[0]
+            #         dy = old_shape[1] / self.img_size[1]
+            #         #print(det[:, :4])
+            #         #det[:, :4] = scale_coords(self.img_size, det[:, :4], old_shape[:2]).round()
+            #         #print(det[:, :4])
+
+            #         for *xyxy, conf, cls in reversed(det):
+            #             coords = torch.tensor(xyxy).tolist()
+            #             xyxy_scaled = [coords[0] * dy, coords[1] * dx, coords[2] * dy, coords[3] * dx]
+            #             #print(, conf, cls)
+            #             #xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
+            #             local_classes.append(int(cls.cpu().item()))
+            #             local_boxes.append(xyxy_scaled)
+            #             local_confs.append(float(conf.cpu().item()))
+
+            #     classes.append(local_classes)
+            #     boxes.append(local_boxes)
+            #     confs.append(local_confs)
 
 
-            return classes, boxes, confs, inference_time, objectness_list, class_conf_list, indices_list, original_prediction
+            # return classes, boxes, confs, inference_time, objectness_list, class_conf_list, indices_list, original_prediction
 
     def train(self, save_dir: str, data: str, cfg: str, hyp: str, transfer=False, workers=8, epochs=10, batch_size=32):
         if self.traced:
